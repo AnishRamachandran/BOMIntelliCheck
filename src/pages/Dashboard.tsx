@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { CheckCircle, AlertTriangle, FileCheck, Zap, Upload, BookOpen, TrendingUp, Activity } from 'lucide-react';
+import { CheckCircle, AlertTriangle, FileCheck, Zap, Upload, BookOpen, TrendingUp, Activity, Book } from 'lucide-react';
 import { supabase, BomCheck, DocCheck } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { DemoPanel } from '../components/DemoMode/DemoPanel';
@@ -36,6 +36,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     complianceTrend: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [showDemoModal, setShowDemoModal] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -142,6 +143,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
         <div className="flex gap-3">
           <button
+            onClick={() => setShowDemoModal(true)}
+            className="flex items-center gap-2 px-5 py-3 bg-slate-800 text-white border border-slate-600 rounded-xl font-medium hover:bg-slate-700 transition-colors"
+          >
+            <Book size={20} />
+            Demo Mode
+          </button>
+          <button
             onClick={() => onNavigate('standards-management')}
             className="flex items-center gap-2 px-5 py-3 bg-white text-slate-900 rounded-xl font-medium hover:bg-slate-100 transition-colors"
           >
@@ -158,7 +166,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
       </div>
 
-      <DemoPanel />
+      <DemoPanel isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
