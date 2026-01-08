@@ -16,6 +16,13 @@ interface DashboardStats {
   complianceHistory: { week: string; rate: number }[];
   currentComplianceRate: number;
   complianceTrend: number;
+  totalDocsUploaded: number;
+  totalDocsChecked: number;
+  docsFullyCorrected: number;
+  spellingIssuesFound: number;
+  spellingIssuesCorrected: number;
+  terminologyViolations: number;
+  avgDocQualityScore: number;
 }
 
 interface DashboardProps {
@@ -34,6 +41,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     complianceHistory: [],
     currentComplianceRate: 0,
     complianceTrend: 0,
+    totalDocsUploaded: 0,
+    totalDocsChecked: 0,
+    docsFullyCorrected: 0,
+    spellingIssuesFound: 0,
+    spellingIssuesCorrected: 0,
+    terminologyViolations: 0,
+    avgDocQualityScore: 0,
   });
   const [loading, setLoading] = useState(true);
   const [showDemoModal, setShowDemoModal] = useState(false);
@@ -63,9 +77,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
   async function fetchDashboardData() {
     try {
-      const [bomResult, complianceResult] = await Promise.all([
+      const [bomResult, docResult, complianceResult] = await Promise.all([
         supabase
           .from('bom_checks')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('doc_checks')
           .select('*')
           .order('created_at', { ascending: false }),
         supabase
@@ -76,6 +94,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
       ]);
 
       const bomChecks = bomResult.data || [];
+      const docChecks = docResult.data || [];
       const complianceHistory = complianceResult.data || [];
 
       const completedBomChecks = bomChecks.filter(c => c.status === 'completed');
@@ -92,6 +111,28 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
       const avgQualityScore = completedBomChecks.length > 0
         ? completedBomChecks.reduce((acc, c) => acc + (c.quality_score || 0), 0) / completedBomChecks.length
+        : 0;
+
+      const completedDocChecks = docChecks.filter(d => d.status === 'completed');
+      const docsFullyCorrected = completedDocChecks.filter(d => (d.quality_score || 0) >= 90).length;
+
+      const spellingIssuesFound = docChecks.reduce((acc, d) => {
+        const issues = d.issues_found ? JSON.parse(d.issues_found) : [];
+        return acc + issues.filter((i: any) => i.type === 'spelling').length;
+      }, 0);
+
+      const spellingIssuesCorrected = docChecks.reduce((acc, d) => {
+        const corrections = d.corrections_made ? JSON.parse(d.corrections_made) : [];
+        return acc + corrections.filter((c: any) => c.type === 'spelling').length;
+      }, 0);
+
+      const terminologyViolations = docChecks.reduce((acc, d) => {
+        const issues = d.issues_found ? JSON.parse(d.issues_found) : [];
+        return acc + issues.filter((i: any) => i.type === 'terminology' || i.type === 'standards').length;
+      }, 0);
+
+      const avgDocQualityScore = completedDocChecks.length > 0
+        ? completedDocChecks.reduce((acc, d) => acc + (d.quality_score || 0), 0) / completedDocChecks.length
         : 0;
 
       const chartData = complianceHistory.map((item, index) => ({
@@ -113,6 +154,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         complianceHistory: chartData,
         currentComplianceRate: currentRate,
         complianceTrend: Math.round(trend * 10) / 10,
+        totalDocsUploaded: docChecks.length,
+        totalDocsChecked: completedDocChecks.length,
+        docsFullyCorrected,
+        spellingIssuesFound,
+        spellingIssuesCorrected,
+        terminologyViolations,
+        avgDocQualityScore: Math.round(avgDocQualityScore * 10) / 10,
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -168,31 +216,90 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
       <DemoPanel isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricCard
-          title="Compliant BOMs"
-          value={stats.compliantBoms}
-          icon={CheckCircle}
-          color="green"
-        />
-        <MetricCard
-          title="Items Requiring Review"
-          value={stats.itemsRequiringReview}
-          icon={AlertTriangle}
-          color="orange"
-        />
-        <MetricCard
-          title="Total BOMs Processed"
-          value={stats.totalProcessed}
-          icon={FileCheck}
-          color="blue"
-        />
-        <MetricCard
-          title="Correction Confidence"
-          value={`${stats.correctionConfidence}%`}
-          icon={Zap}
-          color="purple"
-        />
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-4">BoM Quality Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard
+              title="Compliant BOMs"
+              value={stats.compliantBoms}
+              icon={CheckCircle}
+              color="green"
+            />
+            <MetricCard
+              title="Items Requiring Review"
+              value={stats.itemsRequiringReview}
+              icon={AlertTriangle}
+              color="orange"
+            />
+            <MetricCard
+              title="Total BOMs Processed"
+              value={stats.totalProcessed}
+              icon={FileCheck}
+              color="blue"
+            />
+            <MetricCard
+              title="Avg BoM Quality Score"
+              value={`${stats.avgQualityScore.toFixed(1)}%`}
+              icon={Zap}
+              color="purple"
+            />
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-4">Document Quality Metrics</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <MetricCard
+              title="Total Docs Uploaded"
+              value={stats.totalDocsUploaded}
+              icon={Upload}
+              color="blue"
+            />
+            <MetricCard
+              title="Docs Checked"
+              value={stats.totalDocsChecked}
+              icon={FileCheck}
+              color="green"
+            />
+            <MetricCard
+              title="Fully Corrected Docs"
+              value={stats.docsFullyCorrected}
+              icon={CheckCircle}
+              color="green"
+            />
+            <MetricCard
+              title="Avg Doc Quality Score"
+              value={`${stats.avgDocQualityScore.toFixed(1)}%`}
+              icon={TrendingUp}
+              color="purple"
+            />
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-2xl font-bold text-white mb-4">Issue Detection & Correction</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <MetricCard
+              title="Spelling Issues Found"
+              value={stats.spellingIssuesFound}
+              icon={AlertTriangle}
+              color="orange"
+            />
+            <MetricCard
+              title="Spelling Issues Corrected"
+              value={stats.spellingIssuesCorrected}
+              icon={CheckCircle}
+              color="green"
+            />
+            <MetricCard
+              title="Terminology Violations"
+              value={stats.terminologyViolations}
+              icon={AlertTriangle}
+              color="orange"
+            />
+          </div>
+        </div>
       </div>
 
       <ComplianceChart
@@ -213,7 +320,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <div className="space-y-6">
             <div>
               <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-700">Average Quality Score</span>
+                <span className="text-sm font-medium text-gray-700">Avg BoM Quality Score</span>
                 <span className="text-lg font-bold text-gray-900">{stats.avgQualityScore.toFixed(1)}%</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-3">
@@ -226,12 +333,25 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
             <div>
               <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-medium text-gray-700">Avg Doc Quality Score</span>
+                <span className="text-lg font-bold text-gray-900">{stats.avgDocQualityScore.toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-gray-100 rounded-full h-3">
+                <div
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full transition-all shadow-sm"
+                  style={{ width: `${stats.avgDocQualityScore}%` }}
+                />
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-3">
                 <span className="text-sm font-medium text-gray-700">Compliance Rate</span>
                 <span className="text-lg font-bold text-gray-900">{stats.currentComplianceRate.toFixed(1)}%</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-3">
                 <div
-                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full transition-all shadow-sm"
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full transition-all shadow-sm"
                   style={{ width: `${stats.currentComplianceRate}%` }}
                 />
               </div>
