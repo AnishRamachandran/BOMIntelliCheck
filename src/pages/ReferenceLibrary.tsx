@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Book, Search, Plus, Edit2, Trash2, Save, X, FileText, Tag, Folder } from 'lucide-react';
+import { Book, Search, Plus, CreditCard as Edit2, Trash2, Save, X, FileText, Tag, Folder } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
