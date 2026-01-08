@@ -8,6 +8,10 @@ import { Dashboard } from './pages/Dashboard';
 import { BomCheck } from './pages/BomCheck';
 import { DocCheck } from './pages/DocCheck';
 import { ReferenceLibrary } from './pages/ReferenceLibrary';
+import { StandardsManagement } from './pages/StandardsManagement';
+import { BomItemsValidation } from './pages/BomItemsValidation';
+import { BomCorrectionPreview } from './pages/BomCorrectionPreview';
+import { ReportGeneration } from './pages/ReportGeneration';
 
 function AppContent() {
   const { user } = useAuth();
@@ -30,6 +34,10 @@ function AppContent() {
         return <BomCheck />;
       case 'doc-check':
         return <DocCheck />;
+      case 'standards-management':
+        return <StandardsManagement />;
+      case 'reports':
+        return <ReportGeneration />;
       case 'reference-library':
         return (
           <ProtectedRoute requireAdmin>

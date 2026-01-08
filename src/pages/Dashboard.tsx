@@ -142,7 +142,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
         <div className="flex gap-3">
           <button
-            onClick={() => onNavigate('reference-library')}
+            onClick={() => onNavigate('standards-management')}
             className="flex items-center gap-2 px-5 py-3 bg-white text-slate-900 rounded-xl font-medium hover:bg-slate-100 transition-colors"
           >
             <BookOpen size={20} />
@@ -285,23 +285,21 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               <div className="text-emerald-600">→</div>
             </button>
 
-            {isAdmin && (
-              <button
-                onClick={() => onNavigate('reference-library')}
-                className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-xl transition-all group border border-orange-200"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-orange-600 p-2 rounded-lg group-hover:scale-110 transition-transform">
-                    <BookOpen className="w-5 h-5 text-white" />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-semibold text-gray-900">Manage Standards</p>
-                    <p className="text-sm text-gray-600">Update reference library</p>
-                  </div>
+            <button
+              onClick={() => onNavigate('standards-management')}
+              className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-xl transition-all group border border-orange-200"
+            >
+              <div className="flex items-center gap-3">
+                <div className="bg-orange-600 p-2 rounded-lg group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-5 h-5 text-white" />
                 </div>
-                <div className="text-orange-600">→</div>
-              </button>
-            )}
+                <div className="text-left">
+                  <p className="font-semibold text-gray-900">View Standards</p>
+                  <p className="text-sm text-gray-600">Browse validation rules</p>
+                </div>
+              </div>
+              <div className="text-orange-600">→</div>
+            </button>
           </div>
         </div>
       </div>
