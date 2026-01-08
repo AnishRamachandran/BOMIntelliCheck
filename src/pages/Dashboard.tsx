@@ -181,34 +181,34 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Your Compliance Overview</h1>
-          <p className="text-slate-400 text-lg">
+          <h1 className="text-3xl font-bold text-white mb-1">Your Compliance Overview</h1>
+          <p className="text-slate-400">
             Welcome back, {profile?.full_name || 'User'}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2">
           <button
             onClick={() => setShowDemoModal(true)}
-            className="flex items-center gap-2 px-5 py-3 bg-slate-800 text-white border border-slate-600 rounded-xl font-medium hover:bg-slate-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white border border-slate-600 rounded-lg font-medium hover:bg-slate-700 transition-colors text-sm"
           >
-            <Book size={20} />
+            <Book size={18} />
             Demo Mode
           </button>
           <button
             onClick={() => onNavigate('standards-management')}
-            className="flex items-center gap-2 px-5 py-3 bg-white text-slate-900 rounded-xl font-medium hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100 transition-colors text-sm"
           >
-            <BookOpen size={20} />
+            <BookOpen size={18} />
             Access Standards Library
           </button>
           <button
             onClick={() => onNavigate('bom-check')}
-            className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30 text-sm"
           >
-            <Upload size={20} />
+            <Upload size={18} />
             Upload New BOM
           </button>
         </div>
@@ -216,10 +216,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
       <DemoPanel isOpen={showDemoModal} onClose={() => setShowDemoModal(false)} />
 
-      <div className="space-y-6">
+      <div className="space-y-4">
         <div>
-          <h2 className="text-2xl font-bold text-white mb-4">BoM Quality Metrics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <h2 className="text-lg font-bold text-white mb-3">Quality Overview</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <MetricCard
               title="Compliant BOMs"
               value={stats.compliantBoms}
@@ -239,19 +239,13 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               color="blue"
             />
             <MetricCard
-              title="Avg BoM Quality Score"
+              title="Avg BoM Quality"
               value={`${stats.avgQualityScore.toFixed(1)}%`}
               icon={Zap}
               color="purple"
             />
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-4">Document Quality Metrics</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <MetricCard
-              title="Total Docs Uploaded"
+              title="Docs Uploaded"
               value={stats.totalDocsUploaded}
               icon={Upload}
               color="blue"
@@ -262,41 +256,47 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               icon={FileCheck}
               color="green"
             />
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-bold text-white mb-3">Issue Detection & Correction</h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             <MetricCard
-              title="Fully Corrected Docs"
+              title="Docs Fully Corrected"
               value={stats.docsFullyCorrected}
               icon={CheckCircle}
               color="green"
             />
             <MetricCard
-              title="Avg Doc Quality Score"
+              title="Avg Doc Quality"
               value={`${stats.avgDocQualityScore.toFixed(1)}%`}
               icon={TrendingUp}
               color="purple"
             />
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-4">Issue Detection & Correction</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <MetricCard
-              title="Spelling Issues Found"
+              title="Spelling Found"
               value={stats.spellingIssuesFound}
               icon={AlertTriangle}
               color="orange"
             />
             <MetricCard
-              title="Spelling Issues Corrected"
+              title="Spelling Corrected"
               value={stats.spellingIssuesCorrected}
               icon={CheckCircle}
               color="green"
             />
             <MetricCard
-              title="Terminology Violations"
+              title="Terminology Issues"
               value={stats.terminologyViolations}
               icon={AlertTriangle}
               color="orange"
+            />
+            <MetricCard
+              title="Correction Rate"
+              value={`${stats.correctionConfidence.toFixed(1)}%`}
+              icon={Zap}
+              color="purple"
             />
           </div>
         </div>
@@ -308,63 +308,63 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         trend={stats.complianceTrend}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-3 rounded-xl">
-              <TrendingUp className="w-6 h-6 text-white" />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="bg-white rounded-xl p-5 shadow-lg border border-gray-100">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 p-2 rounded-lg">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Performance Metrics</h2>
+            <h2 className="text-lg font-bold text-gray-900">Performance Metrics</h2>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-700">Avg BoM Quality Score</span>
-                <span className="text-lg font-bold text-gray-900">{stats.avgQualityScore.toFixed(1)}%</span>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-medium text-gray-700">Avg BoM Quality Score</span>
+                <span className="text-sm font-bold text-gray-900">{stats.avgQualityScore.toFixed(1)}%</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3">
+              <div className="w-full bg-gray-100 rounded-full h-2">
                 <div
-                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all shadow-sm"
+                  className="bg-gradient-to-r from-blue-500 to-blue-600 h-2 rounded-full transition-all shadow-sm"
                   style={{ width: `${stats.avgQualityScore}%` }}
                 />
               </div>
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-700">Avg Doc Quality Score</span>
-                <span className="text-lg font-bold text-gray-900">{stats.avgDocQualityScore.toFixed(1)}%</span>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-medium text-gray-700">Avg Doc Quality Score</span>
+                <span className="text-sm font-bold text-gray-900">{stats.avgDocQualityScore.toFixed(1)}%</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3">
+              <div className="w-full bg-gray-100 rounded-full h-2">
                 <div
-                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-3 rounded-full transition-all shadow-sm"
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2 rounded-full transition-all shadow-sm"
                   style={{ width: `${stats.avgDocQualityScore}%` }}
                 />
               </div>
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-700">Compliance Rate</span>
-                <span className="text-lg font-bold text-gray-900">{stats.currentComplianceRate.toFixed(1)}%</span>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-medium text-gray-700">Compliance Rate</span>
+                <span className="text-sm font-bold text-gray-900">{stats.currentComplianceRate.toFixed(1)}%</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3">
+              <div className="w-full bg-gray-100 rounded-full h-2">
                 <div
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full transition-all shadow-sm"
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full transition-all shadow-sm"
                   style={{ width: `${stats.currentComplianceRate}%` }}
                 />
               </div>
             </div>
 
             <div>
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-sm font-medium text-gray-700">Auto-Correction Success</span>
-                <span className="text-lg font-bold text-gray-900">{stats.correctionConfidence.toFixed(1)}%</span>
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-xs font-medium text-gray-700">Auto-Correction Success</span>
+                <span className="text-sm font-bold text-gray-900">{stats.correctionConfidence.toFixed(1)}%</span>
               </div>
-              <div className="w-full bg-gray-100 rounded-full h-3">
+              <div className="w-full bg-gray-100 rounded-full h-2">
                 <div
-                  className="bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 h-3 rounded-full transition-all shadow-sm"
+                  className="bg-gradient-to-r from-fuchsia-500 to-fuchsia-600 h-2 rounded-full transition-all shadow-sm"
                   style={{ width: `${stats.correctionConfidence}%` }}
                 />
               </div>
@@ -372,61 +372,61 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
-          <div className="flex items-center gap-3 mb-6">
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-3 rounded-xl">
-              <Activity className="w-6 h-6 text-white" />
+        <div className="bg-white rounded-xl p-5 shadow-lg border border-gray-100">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-600 p-2 rounded-lg">
+              <Activity className="w-5 h-5 text-white" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+            <h2 className="text-lg font-bold text-gray-900">Quick Actions</h2>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             <button
               onClick={() => onNavigate('bom-check')}
-              className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-xl transition-all group border border-blue-200"
+              className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-lg transition-all group border border-blue-200"
             >
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-600 p-2 rounded-lg group-hover:scale-110 transition-transform">
-                  <Upload className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-2">
+                <div className="bg-blue-600 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
+                  <Upload className="w-4 h-4 text-white" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-900">Upload New BOM</p>
-                  <p className="text-sm text-gray-600">Start a new validation</p>
+                  <p className="text-sm font-semibold text-gray-900">Upload New BOM</p>
+                  <p className="text-xs text-gray-600">Start a new validation</p>
                 </div>
               </div>
-              <div className="text-blue-600">→</div>
+              <div className="text-blue-600 text-sm">→</div>
             </button>
 
             <button
               onClick={() => onNavigate('doc-check')}
-              className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 rounded-xl transition-all group border border-emerald-200"
+              className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 rounded-lg transition-all group border border-emerald-200"
             >
-              <div className="flex items-center gap-3">
-                <div className="bg-emerald-600 p-2 rounded-lg group-hover:scale-110 transition-transform">
-                  <FileCheck className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-2">
+                <div className="bg-emerald-600 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
+                  <FileCheck className="w-4 h-4 text-white" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-900">Check Document</p>
-                  <p className="text-sm text-gray-600">Validate technical docs</p>
+                  <p className="text-sm font-semibold text-gray-900">Check Document</p>
+                  <p className="text-xs text-gray-600">Validate technical docs</p>
                 </div>
               </div>
-              <div className="text-emerald-600">→</div>
+              <div className="text-emerald-600 text-sm">→</div>
             </button>
 
             <button
               onClick={() => onNavigate('standards-management')}
-              className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-xl transition-all group border border-orange-200"
+              className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-orange-50 to-orange-100 hover:from-orange-100 hover:to-orange-200 rounded-lg transition-all group border border-orange-200"
             >
-              <div className="flex items-center gap-3">
-                <div className="bg-orange-600 p-2 rounded-lg group-hover:scale-110 transition-transform">
-                  <BookOpen className="w-5 h-5 text-white" />
+              <div className="flex items-center gap-2">
+                <div className="bg-orange-600 p-1.5 rounded-lg group-hover:scale-110 transition-transform">
+                  <BookOpen className="w-4 h-4 text-white" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-gray-900">View Standards</p>
-                  <p className="text-sm text-gray-600">Browse validation rules</p>
+                  <p className="text-sm font-semibold text-gray-900">View Standards</p>
+                  <p className="text-xs text-gray-600">Browse validation rules</p>
                 </div>
               </div>
-              <div className="text-orange-600">→</div>
+              <div className="text-orange-600 text-sm">→</div>
             </button>
           </div>
         </div>
