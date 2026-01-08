@@ -72,23 +72,25 @@ export function BomCheck() {
     setUploading(true);
 
     try {
-      // Upload file to Supabase storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('bom-files')
-        .upload(fileName, file);
+        .from('bom-uploads')
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // Create BOM check record
+      const fileHash = `${Date.now()}-${file.name}`;
+
       const { data: bomCheck, error: dbError } = await supabase
         .from('bom_checks')
         .insert([
           {
             user_id: user.id,
-            file_name: file.name,
+            original_filename: file.name,
+            file_path: filePath,
+            file_hash: fileHash,
             status: 'processing',
             issues_found: 0,
             issues_corrected: 0,
