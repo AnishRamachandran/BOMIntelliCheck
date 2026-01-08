@@ -101,6 +101,63 @@ export function ReportGeneration() {
     }
   }
 
+  function downloadReport(report: Report) {
+    const content = generateMockReportContent(report);
+    const blob = new Blob([content], { type: getMimeType(report.format) });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${report.report_type}-${report.date_range_start}-to-${report.date_range_end}.${report.format}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function getMimeType(format: string): string {
+    switch (format) {
+      case 'pdf':
+        return 'application/pdf';
+      case 'csv':
+        return 'text/csv';
+      case 'json':
+        return 'application/json';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
+  function generateMockReportContent(report: Report): string {
+    const reportTitle = report.report_type.replace('_', ' ').toUpperCase();
+    const dateRange = `${report.date_range_start} to ${report.date_range_end}`;
+
+    if (report.format === 'json') {
+      return JSON.stringify({
+        report_type: report.report_type,
+        date_range: { start: report.date_range_start, end: report.date_range_end },
+        generated_at: report.created_at,
+        summary: {
+          total_bom_checks: 24,
+          total_doc_checks: 18,
+          average_quality_score: 87.5,
+          issues_found: 156,
+          issues_corrected: 124
+        },
+        details: [
+          { date: '2023-11-15', bom_checks: 8, quality_score: 85.2 },
+          { date: '2023-11-22', bom_checks: 10, quality_score: 89.1 },
+          { date: '2023-11-29', bom_checks: 6, quality_score: 88.7 }
+        ]
+      }, null, 2);
+    }
+
+    if (report.format === 'csv') {
+      return `${reportTitle} REPORT\nDate Range,${dateRange}\n\nDate,BOM Checks,Doc Checks,Quality Score,Issues Found,Issues Corrected\n2023-11-15,8,6,85.2,45,38\n2023-11-22,10,7,89.1,52,44\n2023-11-29,6,5,88.7,59,42\n\nTOTAL,24,18,87.5,156,124`;
+    }
+
+    return `${reportTitle} REPORT\n${'='.repeat(50)}\n\nDate Range: ${dateRange}\nGenerated: ${new Date(report.created_at).toLocaleString()}\n\nSUMMARY\n${'-'.repeat(50)}\nTotal BOM Checks: 24\nTotal Doc Checks: 18\nAverage Quality Score: 87.5%\nTotal Issues Found: 156\nTotal Issues Corrected: 124\n\nDETAILED BREAKDOWN\n${'-'.repeat(50)}\n\n2023-11-15:\n  BOM Checks: 8\n  Quality Score: 85.2%\n  Issues: 45 found, 38 corrected\n\n2023-11-22:\n  BOM Checks: 10\n  Quality Score: 89.1%\n  Issues: 52 found, 44 corrected\n\n2023-11-29:\n  BOM Checks: 6\n  Quality Score: 88.7%\n  Issues: 59 found, 42 corrected\n`;
+  }
+
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
@@ -253,7 +310,10 @@ export function ReportGeneration() {
 
                   <div className="flex gap-2">
                     {report.status === 'completed' && (
-                      <button className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => downloadReport(report)}
+                        className="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                      >
                         <Download size={14} />
                         Download
                       </button>

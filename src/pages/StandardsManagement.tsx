@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, ChevronDown, ChevronUp, Globe, FolderTree, BookOpen } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Globe, FolderTree, BookOpen, Plus, Edit2, X } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface StandardRule {
@@ -25,6 +25,18 @@ export function StandardsManagement() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTab, setSelectedTab] = useState<'all' | 'exceptions' | 'examples'>('all');
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingRule, setEditingRule] = useState<StandardRule | null>(null);
+  const [formData, setFormData] = useState({
+    rule_id: '',
+    name: '',
+    category: 'general',
+    description: '',
+    status: 'active',
+    correct_example: '',
+    incorrect_example: '',
+    approved_materials: '',
+  });
 
   useEffect(() => {
     fetchRules();
@@ -43,6 +55,80 @@ export function StandardsManagement() {
       console.error('Error fetching rules:', error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function openAddModal() {
+    setEditingRule(null);
+    setFormData({
+      rule_id: '',
+      name: '',
+      category: 'general',
+      description: '',
+      status: 'active',
+      correct_example: '',
+      incorrect_example: '',
+      approved_materials: '',
+    });
+    setShowModal(true);
+  }
+
+  function openEditModal(rule: StandardRule) {
+    setEditingRule(rule);
+    setFormData({
+      rule_id: rule.rule_id,
+      name: rule.name,
+      category: rule.category,
+      description: rule.description,
+      status: rule.status,
+      correct_example: rule.examples?.correct || '',
+      incorrect_example: rule.examples?.incorrect || '',
+      approved_materials: rule.examples?.approved?.join(', ') || '',
+    });
+    setShowModal(true);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    const examples: any = {};
+    if (formData.correct_example) examples.correct = formData.correct_example;
+    if (formData.incorrect_example) examples.incorrect = formData.incorrect_example;
+    if (formData.approved_materials) {
+      examples.approved = formData.approved_materials.split(',').map(m => m.trim()).filter(Boolean);
+    }
+
+    const ruleData = {
+      rule_id: formData.rule_id,
+      name: formData.name,
+      category: formData.category,
+      description: formData.description,
+      status: formData.status,
+      examples,
+      updated_at: new Date().toISOString(),
+    };
+
+    try {
+      if (editingRule) {
+        const { error } = await supabase
+          .from('standards_rules')
+          .update(ruleData)
+          .eq('id', editingRule.id);
+
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('standards_rules')
+          .insert([ruleData]);
+
+        if (error) throw error;
+      }
+
+      setShowModal(false);
+      fetchRules();
+    } catch (error) {
+      console.error('Error saving rule:', error);
+      alert('Failed to save rule. Please try again.');
     }
   }
 
@@ -115,6 +201,13 @@ export function StandardsManagement() {
             AI BOM System Knowledge Base
           </p>
         </div>
+        <button
+          onClick={openAddModal}
+          className="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30"
+        >
+          <Plus size={20} />
+          Add New Rule
+        </button>
       </div>
 
       <div className="flex gap-4">
@@ -216,9 +309,21 @@ export function StandardsManagement() {
                   {isExpanded && (
                     <div className="px-6 pb-6 pt-2">
                       <div className="bg-gray-50 rounded-xl p-4 space-y-3">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-700 mb-2">Description:</p>
-                          <p className="text-sm text-gray-600">{rule.description}</p>
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-gray-700 mb-2">Description:</p>
+                            <p className="text-sm text-gray-600">{rule.description}</p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(rule);
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                          >
+                            <Edit2 size={14} />
+                            Edit Rule
+                          </button>
                         </div>
 
                         {rule.examples?.correct && (
@@ -267,6 +372,155 @@ export function StandardsManagement() {
           )}
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-2xl font-bold text-gray-900">
+                {editingRule ? 'Edit Rule' : 'Add New Rule'}
+              </h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rule ID
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.rule_id}
+                  onChange={(e) => setFormData({ ...formData, rule_id: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., BOM-001"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rule Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Part Number Format"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Category
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="general">General</option>
+                  <option value="naming">Naming</option>
+                  <option value="compliance">Compliance</option>
+                  <option value="material">Material</option>
+                  <option value="formatting">Formatting</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                </label>
+                <textarea
+                  required
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  placeholder="Describe what this rule validates..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="active">Active</option>
+                  <option value="deprecated">Deprecated</option>
+                  <option value="draft">Draft</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Correct Example
+                </label>
+                <input
+                  type="text"
+                  value={formData.correct_example}
+                  onChange={(e) => setFormData({ ...formData, correct_example: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., RES-0603-10K-1%"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Incorrect Example
+                </label>
+                <input
+                  type="text"
+                  value={formData.incorrect_example}
+                  onChange={(e) => setFormData({ ...formData, incorrect_example: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., res10k"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Approved Materials (comma-separated)
+                </label>
+                <input
+                  type="text"
+                  value={formData.approved_materials}
+                  onChange={(e) => setFormData({ ...formData, approved_materials: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Copper, Aluminum, Steel"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30"
+                >
+                  {editingRule ? 'Update Rule' : 'Create Rule'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

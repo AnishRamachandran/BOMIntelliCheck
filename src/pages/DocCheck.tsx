@@ -76,26 +76,27 @@ export function DocCheck() {
     setUploading(true);
 
     try {
-      // Upload file to Supabase storage
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
-        .from('doc-files')
-        .upload(fileName, file);
+        .from('doc-uploads')
+        .upload(filePath, file);
 
       if (uploadError) throw uploadError;
 
-      // Create doc check record
+      const fileHash = `${Date.now()}-${file.name}`;
+
       const { data: docCheck, error: dbError } = await supabase
         .from('doc_checks')
         .insert([
           {
             user_id: user.id,
-            file_name: file.name,
+            original_filename: file.name,
+            file_path: filePath,
+            file_hash: fileHash,
             status: 'processing',
-            issues_found: '[]',
-            corrections_made: '[]',
+            issues_found: 0,
             quality_score: 0,
           },
         ])
@@ -154,14 +155,13 @@ export function DocCheck() {
         const correctedIssues = mockIssues.filter((i) => i.corrected).length;
         const qualityScore = Math.round((correctedIssues / totalIssues) * 100);
 
-        // Update the doc check record
         await supabase
           .from('doc_checks')
           .update({
             status: 'completed',
-            issues_found: JSON.stringify(mockIssues),
-            corrections_made: JSON.stringify(mockIssues.filter((i) => i.corrected)),
+            issues_found: totalIssues,
             quality_score: qualityScore,
+            validation_result: mockIssues,
           })
           .eq('id', docCheck.id);
 
