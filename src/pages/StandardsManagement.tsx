@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Search, ChevronDown, ChevronUp, Globe, FolderTree, BookOpen, Plus, Edit2, X } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, Globe, FolderTree, BookOpen, Plus, Edit2, X, AlertCircle } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 interface StandardRule {
@@ -37,6 +37,8 @@ export function StandardsManagement() {
     incorrect_example: '',
     approved_materials: '',
   });
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   useEffect(() => {
     fetchRules();
@@ -70,11 +72,14 @@ export function StandardsManagement() {
       incorrect_example: '',
       approved_materials: '',
     });
+    setShowAdvancedOptions(false);
+    setFieldErrors({});
     setShowModal(true);
   }
 
   function openEditModal(rule: StandardRule) {
     setEditingRule(rule);
+    const hasExamples = rule.examples?.correct || rule.examples?.incorrect || rule.examples?.approved;
     setFormData({
       rule_id: rule.rule_id,
       name: rule.name,
@@ -85,11 +90,42 @@ export function StandardsManagement() {
       incorrect_example: rule.examples?.incorrect || '',
       approved_materials: rule.examples?.approved?.join(', ') || '',
     });
+    setShowAdvancedOptions(!!hasExamples);
+    setFieldErrors({});
     setShowModal(true);
+  }
+
+  function validateForm(): boolean {
+    const errors: { [key: string]: string } = {};
+
+    if (!formData.rule_id.trim()) {
+      errors.rule_id = 'Rule ID is required';
+    } else if (!/^[A-Z]+-\d+$/.test(formData.rule_id)) {
+      errors.rule_id = 'Format: XXX-000 (e.g., BOM-001)';
+    }
+
+    if (!formData.name.trim()) {
+      errors.name = 'Rule name is required';
+    } else if (formData.name.length < 3) {
+      errors.name = 'Name must be at least 3 characters';
+    }
+
+    if (!formData.description.trim()) {
+      errors.description = 'Description is required';
+    } else if (formData.description.length < 10) {
+      errors.description = 'Please provide a more detailed description';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
 
     const examples: any = {};
     if (formData.correct_example) examples.correct = formData.correct_example;
@@ -129,6 +165,13 @@ export function StandardsManagement() {
     } catch (error) {
       console.error('Error saving rule:', error);
       alert('Failed to save rule. Please try again.');
+    }
+  }
+
+  function handleFieldChange(field: string, value: string) {
+    setFormData({ ...formData, [field]: value });
+    if (fieldErrors[field]) {
+      setFieldErrors({ ...fieldErrors, [field]: '' });
     }
   }
 
@@ -388,119 +431,167 @@ export function StandardsManagement() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rule ID
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.rule_id}
-                  onChange={(e) => setFormData({ ...formData, rule_id: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., BOM-001"
-                />
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+              <div className="space-y-4 pb-4 border-b border-gray-200">
+                <p className="text-sm text-gray-600">Required fields are marked with *</p>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rule ID <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.rule_id}
+                    onChange={(e) => handleFieldChange('rule_id', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      fieldErrors.rule_id ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    placeholder="e.g., BOM-001"
+                  />
+                  {fieldErrors.rule_id && (
+                    <div className="flex items-center gap-2 mt-1 text-sm text-red-600">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors.rule_id}</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">Format: XXX-000 (letters, dash, numbers)</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Rule Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => handleFieldChange('name', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      fieldErrors.name ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    placeholder="e.g., Part Number Format"
+                  />
+                  {fieldErrors.name && (
+                    <div className="flex items-center gap-2 mt-1 text-sm text-red-600">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors.name}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.category}
+                    onChange={(e) => handleFieldChange('category', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="general">General</option>
+                    <option value="naming">Naming</option>
+                    <option value="compliance">Compliance</option>
+                    <option value="material">Material</option>
+                    <option value="formatting">Formatting</option>
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">Select the rule category for better organization</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description <span className="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => handleFieldChange('description', e.target.value)}
+                    className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                      fieldErrors.description ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                    }`}
+                    rows={3}
+                    placeholder="Describe what this rule validates..."
+                  />
+                  {fieldErrors.description && (
+                    <div className="flex items-center gap-2 mt-1 text-sm text-red-600">
+                      <AlertCircle size={14} />
+                      <span>{fieldErrors.description}</span>
+                    </div>
+                  )}
+                  <p className="text-xs text-gray-500 mt-1">{formData.description.length} characters</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => handleFieldChange('status', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="active">Active - Rule is enforced</option>
+                    <option value="draft">Draft - Rule is not yet enforced</option>
+                    <option value="deprecated">Deprecated - Rule is no longer used</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Rule Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Part Number Format"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category
-                </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium text-sm"
                 >
-                  <option value="general">General</option>
-                  <option value="naming">Naming</option>
-                  <option value="compliance">Compliance</option>
-                  <option value="material">Material</option>
-                  <option value="formatting">Formatting</option>
-                </select>
+                  {showAdvancedOptions ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                  {showAdvancedOptions ? 'Hide' : 'Show'} Advanced Options (Examples & Materials)
+                </button>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
-                </label>
-                <textarea
-                  required
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  placeholder="Describe what this rule validates..."
-                />
-              </div>
+              {showAdvancedOptions && (
+                <div className="space-y-4 pt-4 border-t border-gray-200">
+                  <p className="text-sm text-gray-600">Add examples and approved materials (optional)</p>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="active">Active</option>
-                  <option value="deprecated">Deprecated</option>
-                  <option value="draft">Draft</option>
-                </select>
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Correct Example
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.correct_example}
+                      onChange={(e) => handleFieldChange('correct_example', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., RES-0603-10K-1%"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Show users what a correct value looks like</p>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Correct Example
-                </label>
-                <input
-                  type="text"
-                  value={formData.correct_example}
-                  onChange={(e) => setFormData({ ...formData, correct_example: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., RES-0603-10K-1%"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Incorrect Example
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.incorrect_example}
+                      onChange={(e) => handleFieldChange('incorrect_example', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., res10k"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Show users what to avoid</p>
+                  </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Incorrect Example
-                </label>
-                <input
-                  type="text"
-                  value={formData.incorrect_example}
-                  onChange={(e) => setFormData({ ...formData, incorrect_example: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., res10k"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Approved Materials (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  value={formData.approved_materials}
-                  onChange={(e) => setFormData({ ...formData, approved_materials: e.target.value })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="e.g., Copper, Aluminum, Steel"
-                />
-              </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Approved Materials
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.approved_materials}
+                      onChange={(e) => handleFieldChange('approved_materials', e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      placeholder="e.g., Copper, Aluminum, Steel"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Separate multiple materials with commas</p>
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button

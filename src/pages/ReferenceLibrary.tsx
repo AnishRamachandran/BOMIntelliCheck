@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Book, Search, Plus, CreditCard as Edit2, Trash2, Save, X, FileText, Tag, Folder } from 'lucide-react';
+import { Book, Search, Plus, CreditCard as Edit2, Trash2, Save, X, FileText, Tag, Folder, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -30,6 +30,8 @@ export function ReferenceLibrary() {
     content: '',
     tags: '',
   });
+  const [showContentPreview, setShowContentPreview] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const categories = [
     'All',
@@ -61,8 +63,46 @@ export function ReferenceLibrary() {
     }
   }
 
+  function validateForm(): boolean {
+    const errors: { [key: string]: string } = {};
+
+    if (!formData.title.trim()) {
+      errors.title = 'Title is required';
+    } else if (formData.title.length < 3) {
+      errors.title = 'Title must be at least 3 characters';
+    }
+
+    if (!formData.category) {
+      errors.category = 'Please select a category';
+    }
+
+    if (!formData.description.trim()) {
+      errors.description = 'Description is required';
+    }
+
+    if (!formData.content.trim()) {
+      errors.content = 'Content is required';
+    } else if (formData.content.length < 20) {
+      errors.content = 'Please provide more detailed content (at least 20 characters)';
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
+  function handleFieldChange(field: string, value: string) {
+    setFormData({ ...formData, [field]: value });
+    if (fieldErrors[field]) {
+      setFieldErrors({ ...fieldErrors, [field]: '' });
+    }
+  }
+
   async function handleSave() {
     if (!user) return;
+
+    if (!validateForm()) {
+      return;
+    }
 
     const tags = formData.tags
       .split(',')
@@ -71,7 +111,6 @@ export function ReferenceLibrary() {
 
     try {
       if (editingId) {
-        // Update existing
         const { error } = await supabase
           .from('reference_library')
           .update({
@@ -86,7 +125,6 @@ export function ReferenceLibrary() {
 
         if (error) throw error;
       } else {
-        // Create new
         const { error } = await supabase.from('reference_library').insert([
           {
             title: formData.title,
@@ -101,10 +139,11 @@ export function ReferenceLibrary() {
         if (error) throw error;
       }
 
-      // Reset form and refresh
       setFormData({ title: '', category: '', description: '', content: '', tags: '' });
       setIsAddingNew(false);
       setEditingId(null);
+      setFieldErrors({});
+      setShowContentPreview(false);
       fetchReferences();
     } catch (error) {
       console.error('Error saving reference:', error);
@@ -142,6 +181,20 @@ export function ReferenceLibrary() {
     setFormData({ title: '', category: '', description: '', content: '', tags: '' });
     setIsAddingNew(false);
     setEditingId(null);
+    setFieldErrors({});
+    setShowContentPreview(false);
+  }
+
+  function getCategoryDescription(category: string): string {
+    const descriptions: { [key: string]: string } = {
+      'standards': 'Industry standards, specifications, and regulations',
+      'materials': 'Material properties, specifications, and guidelines',
+      'naming conventions': 'Naming rules and conventions for parts and documents',
+      'compliance': 'Compliance requirements and regulatory information',
+      'best practices': 'Recommended practices and guidelines',
+      'terminology': 'Technical terms, definitions, and glossary items'
+    };
+    return descriptions[category.toLowerCase()] || '';
   }
 
   const filteredReferences = references.filter((ref) => {
@@ -212,24 +265,40 @@ export function ReferenceLibrary() {
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
+            <p className="text-sm text-gray-600">Fields marked with * are required</p>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Title <span className="text-red-500">*</span>
+              </label>
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Enter reference title"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => handleFieldChange('title', e.target.value)}
+                placeholder="Enter a clear, descriptive title"
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  fieldErrors.title ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
               />
+              {fieldErrors.title && (
+                <div className="flex items-center gap-2 mt-1 text-sm text-red-600">
+                  <AlertCircle size={14} />
+                  <span>{fieldErrors.title}</span>
+                </div>
+              )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category <span className="text-red-500">*</span>
+              </label>
               <select
                 value={formData.category}
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={(e) => handleFieldChange('category', e.target.value)}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  fieldErrors.category ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
               >
                 <option value="">Select a category</option>
                 {categories.filter((c) => c !== 'All').map((category) => (
@@ -238,51 +307,111 @@ export function ReferenceLibrary() {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
-              <input
-                type="text"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Brief description"
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
-              <textarea
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                placeholder="Detailed content, guidelines, or specifications"
-                rows={8}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+              {fieldErrors.category ? (
+                <div className="flex items-center gap-2 mt-1 text-sm text-red-600">
+                  <AlertCircle size={14} />
+                  <span>{fieldErrors.category}</span>
+                </div>
+              ) : formData.category ? (
+                <p className="text-xs text-gray-500 mt-1">{getCategoryDescription(formData.category)}</p>
+              ) : null}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tags (comma-separated)
+                Description <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.description}
+                onChange={(e) => handleFieldChange('description', e.target.value)}
+                placeholder="One-line summary of this reference"
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  fieldErrors.description ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+              />
+              {fieldErrors.description && (
+                <div className="flex items-center gap-2 mt-1 text-sm text-red-600">
+                  <AlertCircle size={14} />
+                  <span>{fieldErrors.description}</span>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Content <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowContentPreview(!showContentPreview)}
+                  className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1"
+                >
+                  {showContentPreview ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                  {showContentPreview ? 'Hide Preview' : 'Show Preview'}
+                </button>
+              </div>
+              <textarea
+                value={formData.content}
+                onChange={(e) => handleFieldChange('content', e.target.value)}
+                placeholder="Detailed content, guidelines, specifications, or reference information..."
+                rows={showContentPreview ? 6 : 10}
+                className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  fieldErrors.content ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                }`}
+              />
+              {fieldErrors.content ? (
+                <div className="flex items-center gap-2 mt-1 text-sm text-red-600">
+                  <AlertCircle size={14} />
+                  <span>{fieldErrors.content}</span>
+                </div>
+              ) : (
+                <p className="text-xs text-gray-500 mt-1">{formData.content.length} characters</p>
+              )}
+
+              {showContentPreview && formData.content && (
+                <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-xs font-semibold text-gray-700 mb-2">Preview:</p>
+                  <div className="text-sm text-gray-700 whitespace-pre-wrap">{formData.content}</div>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Tags (optional)
               </label>
               <input
                 type="text"
                 value={formData.tags}
-                onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                onChange={(e) => handleFieldChange('tags', e.target.value)}
                 placeholder="e.g., ISO, RoHS, quality, validation"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <p className="text-xs text-gray-500 mt-1">Separate multiple tags with commas</p>
+              {formData.tags && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {formData.tags.split(',').map((tag, idx) => {
+                    const trimmedTag = tag.trim();
+                    return trimmedTag ? (
+                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                        <Tag size={12} />
+                        {trimmedTag}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
             </div>
 
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-4 border-t border-gray-200">
               <button
                 onClick={handleSave}
-                disabled={!formData.title || !formData.category || !formData.content}
-                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/30"
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/30"
               >
                 <Save size={20} />
-                {editingId ? 'Update' : 'Save'} Reference
+                {editingId ? 'Update Reference' : 'Save Reference'}
               </button>
               <button
                 onClick={handleCancel}
