@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Activity, Clock, TrendingUp, X, Eye } from 'lucide-react';
+import { Upload, FileText, CheckCircle, AlertTriangle, XCircle, Activity, Clock, TrendingUp, X, Eye, Download } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -21,6 +21,9 @@ interface ValidationResult {
 interface BomCheckHistory {
   id: string;
   original_filename: string;
+  file_path: string;
+  corrected_file_path: string;
+  report_path: string;
   status: string;
   quality_score: number;
   total_entries: number;
@@ -204,6 +207,53 @@ export function BomCheck() {
     setValidationResult(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
+    }
+  }
+
+  async function downloadFile(filePath: string, fileName: string) {
+    try {
+      if (!filePath) {
+        alert('File not available for download');
+        return;
+      }
+
+      const { data, error } = await supabase.storage
+        .from('bom-files')
+        .download(filePath);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Failed to download file. Please try again.');
+    }
+  }
+
+  async function downloadOriginalFile() {
+    if (selectedReport?.file_path) {
+      await downloadFile(selectedReport.file_path, selectedReport.original_filename);
+    }
+  }
+
+  async function downloadCorrectedFile() {
+    if (selectedReport?.corrected_file_path) {
+      const fileName = selectedReport.original_filename.replace(/\.(csv|xlsx|xls)$/i, '_corrected.$1');
+      await downloadFile(selectedReport.corrected_file_path, fileName);
+    }
+  }
+
+  async function downloadReportFile() {
+    if (selectedReport?.report_path) {
+      const fileName = selectedReport.original_filename.replace(/\.(csv|xlsx|xls)$/i, '_report.pdf');
+      await downloadFile(selectedReport.report_path, fileName);
     }
   }
 
@@ -630,19 +680,37 @@ export function BomCheck() {
               </div>
 
               <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-xl p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Validation Complete</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Download Files</h3>
                 <p className="text-sm text-gray-600 mb-4">
                   Your BOM has been validated against {selectedReport.total_entries} entries.
                   {selectedReport.issues_found > 0
                     ? ` ${selectedReport.issues_corrected} issues were automatically corrected, and ${selectedReport.issues_found - selectedReport.issues_corrected} require manual review.`
                     : ' All entries passed validation successfully!'}
                 </p>
-                <div className="flex gap-3">
-                  <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                    Download Report
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <button
+                    onClick={downloadOriginalFile}
+                    disabled={!selectedReport.file_path}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                  >
+                    <Download size={18} />
+                    Original File
                   </button>
-                  <button className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium">
-                    Export Corrected BOM
+                  <button
+                    onClick={downloadCorrectedFile}
+                    disabled={!selectedReport.corrected_file_path}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                  >
+                    <Download size={18} />
+                    Corrected BOM
+                  </button>
+                  <button
+                    onClick={downloadReportFile}
+                    disabled={!selectedReport.report_path}
+                    className="flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors text-sm font-medium"
+                  >
+                    <Download size={18} />
+                    Report PDF
                   </button>
                 </div>
               </div>
