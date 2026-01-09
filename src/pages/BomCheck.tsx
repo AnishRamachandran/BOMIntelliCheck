@@ -259,10 +259,9 @@ export function BomCheck() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          {!validationResult ? (
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+      <div className="space-y-6">
+        {!validationResult ? (
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
               <div
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
@@ -355,148 +354,175 @@ export function BomCheck() {
               )}
             </div>
           ) : (
-            <div className="space-y-6">
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-1">Validation Complete</h2>
-                    <p className="text-gray-600">{validationResult.fileName}</p>
-                  </div>
-                  <button
-                    onClick={resetForm}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                  >
-                    Upload Another
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="bg-blue-600 p-2 rounded-lg">
-                        <FileText className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Issues Found</p>
-                        <p className="text-2xl font-bold text-gray-900">{validationResult.issuesFound}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="bg-green-600 p-2 rounded-lg">
-                        <CheckCircle className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Auto-Corrected</p>
-                        <p className="text-2xl font-bold text-gray-900">{validationResult.issuesCorrected}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="bg-purple-600 p-2 rounded-lg">
-                        <Activity className="w-5 h-5 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-600">Quality Score</p>
-                        <p className="text-2xl font-bold text-gray-900">{validationResult.qualityScore}%</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+              <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-4">Issues Detected</h3>
-                  <div className="space-y-3">
-                    {validationResult.issues.map((issue, index) => (
-                      <div
-                        key={index}
-                        className={`p-4 rounded-lg border flex items-start gap-3 ${getSeverityColor(issue.severity)}`}
-                      >
-                        {getSeverityIcon(issue.severity)}
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold capitalize">{issue.type}</span>
-                            {issue.line && (
-                              <span className="text-xs opacity-75">Line {issue.line}</span>
-                            )}
-                          </div>
-                          <p className="text-sm">{issue.message}</p>
-                        </div>
-                      </div>
-                    ))}
+                  <h2 className="text-2xl font-bold text-gray-900 mb-1">Validation Complete</h2>
+                  <p className="text-gray-600">{validationResult.fileName}</p>
+                </div>
+                <button
+                  onClick={resetForm}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                >
+                  Upload Another
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-blue-600 p-2 rounded-lg">
+                      <FileText className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Issues Found</p>
+                      <p className="text-2xl font-bold text-gray-900">{validationResult.issuesFound}</p>
+                    </div>
                   </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-green-600 p-2 rounded-lg">
+                      <CheckCircle className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Auto-Corrected</p>
+                      <p className="text-2xl font-bold text-gray-900">{validationResult.issuesCorrected}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-4 border border-purple-200">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="bg-purple-600 p-2 rounded-lg">
+                      <Activity className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-600">Quality Score</p>
+                      <p className="text-2xl font-bold text-gray-900">{validationResult.qualityScore}%</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Issues Detected</h3>
+                <div className="space-y-3">
+                  {validationResult.issues.map((issue, index) => (
+                    <div
+                      key={index}
+                      className={`p-4 rounded-lg border flex items-start gap-3 ${getSeverityColor(issue.severity)}`}
+                    >
+                      {getSeverityIcon(issue.severity)}
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold capitalize">{issue.type}</span>
+                          {issue.line && (
+                            <span className="text-xs opacity-75">Line {issue.line}</span>
+                          )}
+                        </div>
+                        <p className="text-sm">{issue.message}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           )}
-        </div>
 
-        <div className="bg-slate-800 rounded-2xl p-6 border border-slate-700">
-          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4 flex items-center gap-2">
             <Clock size={20} />
             Recent Checks
           </h2>
 
-          <div className="space-y-3 max-h-[600px] overflow-y-auto">
-            {loading ? (
-              <div className="text-center py-8 text-slate-400">
-                <div className="w-8 h-8 border-2 border-slate-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-                Loading...
-              </div>
-            ) : history.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                No checks yet
-              </div>
-            ) : (
-              history.map((check) => (
+          {loading ? (
+            <div className="text-center py-12 text-gray-400">
+              <div className="w-8 h-8 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+              Loading...
+            </div>
+          ) : history.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <Clock className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p className="font-medium">No checks yet</p>
+              <p className="text-sm text-gray-500 mt-1">Upload a BOM file to get started</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {history.map((check) => (
                 <div
                   key={check.id}
-                  className="bg-slate-700/50 rounded-xl p-4 hover:bg-slate-700 transition-colors cursor-pointer"
+                  className="border border-gray-200 rounded-xl p-5 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer bg-gradient-to-br from-white to-gray-50"
                   onClick={() => viewDetailedReport(check)}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <p className="font-semibold text-white text-sm truncate mb-1">
-                        {check.original_filename}
-                      </p>
-                      <p className="text-xs text-slate-400">
-                        {new Date(check.created_at).toLocaleDateString()} at{' '}
-                        {new Date(check.created_at).toLocaleTimeString()}
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                        <p className="font-semibold text-gray-900 text-sm truncate">
+                          {check.original_filename}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-500">
+                        {new Date(check.created_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })} at {new Date(check.created_at).toLocaleTimeString('en-US', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
                     </div>
                     {getStatusBadge(check.status)}
                   </div>
 
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center gap-4 text-xs text-slate-300">
-                      <div className="flex items-center gap-1">
-                        <TrendingUp size={14} />
-                        <span>{check.quality_score}%</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <AlertTriangle size={14} />
-                        <span>{check.issues_found} issues</span>
-                      </div>
+                  <div className="space-y-2 mb-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <TrendingUp size={14} className="text-blue-600" />
+                        Quality Score
+                      </span>
+                      <span className="font-bold text-blue-600">{check.quality_score}%</span>
                     </div>
-                    <button
-                      className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        viewDetailedReport(check);
-                      }}
-                    >
-                      <Eye size={14} />
-                      View
-                    </button>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <FileText size={14} className="text-gray-500" />
+                        Total Entries
+                      </span>
+                      <span className="font-semibold text-gray-900">{check.total_entries}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <AlertTriangle size={14} className="text-amber-600" />
+                        Issues Found
+                      </span>
+                      <span className="font-semibold text-amber-600">{check.issues_found}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-gray-600 flex items-center gap-1">
+                        <CheckCircle size={14} className="text-green-600" />
+                        Auto-Corrected
+                      </span>
+                      <span className="font-semibold text-green-600">{check.issues_corrected}</span>
+                    </div>
                   </div>
+
+                  <button
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg text-sm font-medium transition-colors"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      viewDetailedReport(check);
+                    }}
+                  >
+                    <Eye size={16} />
+                    View Details
+                  </button>
                 </div>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
